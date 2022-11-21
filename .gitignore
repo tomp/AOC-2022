@@ -1,0 +1,7 @@
+*~
+*.swp
+*.pyc
+__pycache__
+
+AOC
+session_key.txt
