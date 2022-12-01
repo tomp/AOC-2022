@@ -14,13 +14,13 @@ error () {
 }
 
 test -n "$1" || usage
-DAY=$1
+DAY="$1"
 
 dir="day${DAY}"
 prog="$dir/day${DAY}.py"
 infile="$dir/input.txt"
 
-mkdir -p $dir || error "Unable to create $dir"
+mkdir -p "$dir" || error "Unable to create $dir"
 echo "Created $dir"
 
 test -f "$prog" || \
@@ -30,9 +30,12 @@ test -f "$prog" || \
 chmod +x "$prog"
 echo "Wrote $prog"
 
-./get_input.py $DAY > "$infile" || \
+./get_input.py "$DAY" > "$infile" || \
     error "Unable to download input data"
 echo "Downloaded $(wc -l $infile | awk '{print $1}') lines to $infile"
 
 git add "$prog" "$infile"
+
+gvim "$prog" "$infile"
+
 
