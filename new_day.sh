@@ -1,6 +1,7 @@
 #!/bin/bash
 # Create the directory for a new day's code.
 #
+YEAR="2022"
 
 usage () {
     echo "Usage: $0 <day>"
@@ -25,20 +26,21 @@ mkdir -p "$dir" || error "Unable to create $dir"
 echo "Created $dir"
 
 test -f "$prog" || \
-    sed -E 's!([dD][aA][yY]) N *$!\1 '$DAY'!' dayN.py > "$prog" || \
+    sed -E 's!%DAY%!'$DAY'!' dayN.py | \
+    sed -E 's!%YEAR%!'$YEAR'!' > "$prog" || \
     error "Unable to install $prog"
 
 chmod +x "$prog"
 echo "Wrote $prog"
 
-./download.py -d "$DAY" --outfile "$desc" || \
+./download.py -y $YEAR -d "$DAY" --outfile "$desc" || \
     error "Unable to download puzzle description"
 
-./download.py -d "$DAY" --input --outfile "$infile" || \
+./download.py -y $YEAR -d "$DAY" --input --outfile "$infile" || \
     error "Unable to download input data"
 echo "$infile has $(wc -l $infile | awk '{print $1}') lines"
 
-git add "$prog" "$infile"
+git add "$prog" "$desc" "$infile"
 
 gvim "$prog" "$desc" "$infile"
 

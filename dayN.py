@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
-#  Advent of Code 2022 - Day N
+#  Advent of Code %YEAR% - Day %DAY%
 #
-from typing import Sequence, Union, Optional, Any
+from typing import Sequence, Union, Optional, Any, Dict, List, Tuple
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
@@ -19,6 +19,9 @@ SAMPLE_CASES = [
     ),
 ]
 
+SAMPLE_CASES2 = SAMPLE_CASES
+
+
 Lines = Sequence[str]
 Sections = Sequence[Lines]
 
@@ -27,7 +30,7 @@ Sections = Sequence[Lines]
 def load_input(infile: str) -> Lines:
     return load_text(Path(infile).read_text())
 
-def sample_case(idx: int = 0) -> tuple[Lines, int]:
+def sample_case(idx: int = 0) -> Tuple[Lines, int]:
     text, expected = SAMPLE_CASES[idx]
     lines = load_text(text)
     return lines, expected
