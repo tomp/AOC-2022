@@ -27,33 +27,23 @@ Sections = Sequence[Lines]
 
 # Utility functions
 
-def load_input(infile: str) -> Lines:
+def load_input(infile: str, strip=True, blank_lines=False) -> Lines:
     return load_text(Path(infile).read_text())
 
-def sample_case(idx: int = 0) -> Tuple[Lines, int]:
-    text, expected = SAMPLE_CASES[idx]
-    lines = load_text(text)
-    return lines, expected
-
-## Use these if blank lines should be discarded.
-
-def load_text(text: str) -> Lines:
-    return filter_blank_lines(text.split("\n"))
-
-def filter_blank_lines(lines: Lines) -> Lines:
-    return [line.strip() for line in lines if line.strip()]
-
-## Use these if blank lines in input are meaningful.
-
-def load_text(text: str) -> Lines:
-    return [line.strip() for line in text.strip("\n").split("\n")]
+def load_text(text: str, strip=True, blank_lines=False) -> Lines:
+    if strip:
+        lines = [line.strip() for line in text.strip("\n").split("\n")]
+    else:
+        lines = [line for line in text.strip("\n").split("\n")]
+    if blank_lines:
+        return lines
+    return [line for line in lines if line.strip()]
 
 def parse_sections(lines: Lines) -> Sections:
     result = []
     sect = []
     for line in lines:
-        line = line.strip()
-        if not line:
+        if not line.strip():
             if sect:
                 result.append(sect)
             sect = []
@@ -91,6 +81,7 @@ def part1(lines: Lines) -> None:
     print("PART 1:")
     result = solve(lines)
     print(f"result is {result}")
+    assert result == -1
     print("= " * 32)
 
 
@@ -110,6 +101,7 @@ def part2(lines: Lines) -> None:
     print("PART 2:")
     result = solve2(lines)
     print(f"result is {result}")
+    assert result == -1
     print("= " * 32)
 
 
@@ -117,5 +109,5 @@ if __name__ == "__main__":
     example1()
     input_lines = load_input(INPUTFILE)
     part1(input_lines)
-    # example2()
-    # part2(input_lines)
+    example2()
+    part2(input_lines)
