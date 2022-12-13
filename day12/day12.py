@@ -127,7 +127,7 @@ class Board():
             print("".join(row))
 
 
-def shortest_path_to_target(board, start, target) -> List[Pos]:
+def shortest_path_to_target_astar(board, start, target) -> List[Pos]:
     """Run an A* search (breadth-first search with minimum distance heuristic)
     to find the shortest path from the starting position to the target location.
     """
@@ -148,6 +148,28 @@ def shortest_path_to_target(board, start, target) -> List[Pos]:
                 nayb_score = len(hist) + nayb.dist(target)
                 # print(f"... neighbor {nayb}  score={nayb_score}  height={board.grid[nayb]}")
                 heappush(queue, (nayb_score, nayb, hist + [nayb]))
+    return []
+
+
+def shortest_path_to_target_bfs(board, start, target) -> List[Pos]:
+    """Run a breadth-first search to find the shortest path from the starting
+    position to the target location.
+    """
+    visited = set()
+    queue = [(start, [])]
+    while queue:
+        pos, hist = queue.pop(0)
+        if pos in visited:
+            continue
+        # print(f">>> check {pos}  score={score} height={board.grid[pos]}")
+        if pos == target:
+            return hist
+        visited.add(pos)
+        height = board.grid[pos]
+        for nayb in pos.neighbors():
+            if board.grid[nayb] <= height + 1 and nayb not in visited:
+                # print(f"... neighbor {nayb}  score={nayb_score}  height={board.grid[nayb]}")
+                queue.append((nayb, hist + [nayb]))
     return []
 
 
@@ -185,7 +207,7 @@ def solve(lines: Lines) -> int:
     """Solve the problem."""
     board = Board.from_lines(lines)
     # board.print(title="Initially")
-    path = shortest_path_to_target(board, board.start, board.target)
+    path = shortest_path_to_target_bfs(board, board.start, board.target)
     return len(path)
 
 
