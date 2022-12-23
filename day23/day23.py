@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import math
 import re
 
-from pos import Pos, NORTH, SOUTH, EAST, WEST
+from pos import Pos, NORTH, SOUTH, EAST, WEST, neighbors, direction
 
 
 INPUTFILE = "input.txt"
@@ -29,7 +29,20 @@ SAMPLE_CASES = [
     ),
 ]
 
-SAMPLE_CASES2 = SAMPLE_CASES
+SAMPLE_CASES2 = [
+    (
+        """
+....#..
+..###.#
+#...#.#
+.#...##
+#.###..
+##.#.##
+.#..#..
+        """,
+        20
+    ),
+]
 
 
 Lines = Sequence[str]
@@ -57,15 +70,17 @@ EMPTY, HASH = ".", "#"
 
 class Board():
     def __init__(self, elves: List[Pos]):
-        self.elves = set(elves)
+        self.elves = elves
         self.steps = 0
+
+        self.elves.sort()
 
     def bounds(self) -> Tuple[int, int, int, int]:
         return (
-            min([pos.row for pos in self.elves]),
-            max([pos.row for pos in self.elves]),
-            min([pos.col for pos in self.elves]),
-            max([pos.col for pos in self.elves]),
+            min([pos[0] for pos in self.elves]),
+            max([pos[0] for pos in self.elves]),
+            min([pos[1] for pos in self.elves]),
+            max([pos[1] for pos in self.elves]),
         )
 
     def display(self, title: str = ""):
@@ -74,11 +89,10 @@ class Board():
         print(f"== {title} ==")
 
         rowmin, rowmax, colmin, colmax = self.bounds()
-        rowmin, rowmax, colmin, colmax = -2, 9, -3, 10
-        for row in range(rowmin, rowmax+1):
+        for row in range(rowmin-2, rowmax+3):
             cells = [
-                "#" if Pos(row, col) in self.elves else "."
-                for col in range(colmin, colmax + 1)
+                "#" if (row, col) in self.elves else "."
+                for col in range(colmin-2, colmax+3)
             ]
             print("".join(cells))
 
@@ -88,50 +102,82 @@ class Board():
         return area - len(self.elves)
 
     def single_step(self):
-        next_pos: Dict[Pos, Pos] = {}
-        elves = list(self.elves)
-        elves.sort()
+        next_pos: List[Pos, Pos] = []
+        elves = self.elves # just an alias, to keep code more compact
+        elf_positions = set(self.elves)
 
         NSWE = [NORTH, SOUTH, WEST, EAST]
 
         # First half of round
         proposals: Dict[Pos, int] = defaultdict(int)
         for pos in elves:
-            if not any([nayb in elves for nayb in pos.neighbors()]):
-                # no neighbors - do nothing
-                next_pos[pos] = pos
-                print(f"... elf @{pos} OK")
+            move_to = pos
+            for nayb in neighbors(pos):
+                if nayb in elf_positions:
+                    move_to = None
+                    break
+            if move_to == pos:
+                next_pos.append((pos, pos))
+                # print(f"... elf @{pos} OK")
                 continue
 
-            move_to = pos
             for i in range(4):
                 idx = (i + self.steps) % 4
                 look_dir = NSWE[idx]
-                if not any([nayb in elves for nayb in pos.neighbors(look_dir)]):
-                    print(f"... elf @{pos} - move {look_dir}")
-                    move_to = pos.direction(look_dir)
+                block = None
+                for nayb in neighbors(pos, look_dir):
+                    if nayb in elf_positions:
+                        block = nayb
+                        break
+                if block is None:
+                    move_to = direction(pos, look_dir)
+                    # print(f"... elf @{pos} - move {look_dir}")
                     break
-            next_pos[pos] = move_to
-            proposals[move_to] += 1
+
+            if move_to is not None:
+                next_pos.append((pos, move_to))
+                proposals[move_to] += 1
+            else:
+                next_pos.append((pos, pos))
 
         # Second half of round
-        self.elves = set()
-        for pos, dest in sorted(next_pos.items()):
+        self.elves = []
+        moved = 0
+        for pos, dest in next_pos:
             if dest == pos:
-                self.elves.add(pos)
-                print(f">>> elf @{pos} OK")
+                self.elves.append(pos)
+                # print(f">>> elf @{pos} OK")
             elif proposals[dest] > 1:
-                self.elves.add(pos)
-                print(f">>> elf @{pos} has collision @{dest}")
+                self.elves.append(pos)
+                # print(f">>> elf @{pos} has collision @{dest}")
             else:
-                self.elves.add(dest)
-                print(f">>> elf @{pos} moves to @{dest}")
+                self.elves.append(dest)
+                moved += 1
+                # print(f">>> elf @{pos} moves to @{dest}")
 
         self.steps += 1
+        return moved == 0
 
 def solve2(lines: Lines) -> int:
     """Solve the problem."""
-    return 0
+    elves = []
+    for row, line in enumerate(lines):
+        for col, cell in enumerate(line):
+            if cell == HASH:
+                elves.append((row, col))
+
+    board = Board(elves)
+    # if len(elves) < 40:
+    #     board.display("Initially")
+
+    done = False
+    while not done:
+        done = board.single_step()
+        # if len(elves) < 40:
+        #     print()
+        #    board.display(f"End of Round {board.steps}")
+
+    return board.steps
 
 def solve(lines: Lines) -> int:
     """Solve the problem."""
@@ -139,15 +185,17 @@ def solve(lines: Lines) -> int:
     for row, line in enumerate(lines):
         for col, cell in enumerate(line):
             if cell == HASH:
-                elves.append(Pos(row, col))
+                elves.append((row, col))
 
     board = Board(elves)
-    board.display("Initially")
+    # if len(elves) < 40:
+    #     board.display("Initially")
 
     for _ in range(10):
-        print()
         board.single_step()
-        board.display(f"End of Round {board.steps}")
+        # if len(elves) < 40:
+        #     print()
+        #     board.display(f"End of Round {board.steps}")
 
     return board.empty_cells()
 
@@ -168,7 +216,7 @@ def part1(lines: Lines) -> None:
     print("PART 1:")
     result = solve(lines)
     print(f"result is {result}")
-    assert result == -1
+    assert result == 3762
     print("= " * 32)
 
 
@@ -188,7 +236,7 @@ def part2(lines: Lines) -> None:
     print("PART 2:")
     result = solve2(lines)
     print(f"result is {result}")
-    assert result == -1
+    assert result == 997
     print("= " * 32)
 
 
