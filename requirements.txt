@@ -1,6 +1,7 @@
 requests
 beautifulsoup4
 markdownify
+jupyterlab
 pylint
 pytest
 black
